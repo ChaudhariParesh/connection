@@ -1,0 +1,97 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+class front_model extends CI_Model{
+
+	public  function check_login(){
+		$this->db->where('user_email',$this->input->post('user_email'));
+		$this->db->where('user_pass',$this->input->post('user_pass'));
+		$this->db->where('is_deleted','0');
+		$result = $this->db->get('tbl_register');
+		$result = $result->row();
+		
+		if(!empty($result)){
+			$data= array(
+			'user_id' =>$result->id,
+			);
+			//print_r ($data);exit;
+			$this->session->set_userdata($data);
+				return 1;
+			}else{
+				return 0;
+			}	
+	}
+    public function set_register(){
+
+        $data  = array(
+                'user_name'  => $this->input->post('user_name'),
+                'user_email'  => $this->input->post('user_email'),
+                'user_mobile' =>$this->input->post('user_mobile'),
+                'user_mobile' =>$this->input->post('user_mobile'),
+                'user_pass'   =>$this->input->post('user_pass'),
+                'user_address'=>$this->input->post('user_address'),
+        );
+        
+			if($this->input->post('id') == ""){
+				$date=array(
+					'created_on'=> date('Y-m-d H:i:s'),
+				);
+			$newuser=array_merge($data,$date);
+			$this->db->insert('tbl_register',$data);
+			return 0;
+			}else{ 		
+				$this->db->where('id',$this->input->post('id'));
+				$this->db->update('tbl_register',$data);
+			return 1;
+			}
+	}
+}
+
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+class front_controller extends CI_Controller { 
+	function __construct(){
+		parent::__construct();
+		$this->is_login();
+	 }
+	public function is_login(){
+		if($this->session->userdata(('user_id') !="")){
+		redirect('dashboard');
+		}
+	 }
+	public function login(){
+		$this->form_validation->set_rules('user_email','user_email','required');
+		$this->form_validation->set_rules('user_pass','user_pass','required');
+		if($this->form_validation->run() == FALSE){
+			$this->load->view('front/login');
+			
+		}else{
+		//	echo "hii";exit;
+			$result=$this->front_model->check_login();
+			//print_r($result);exit;
+			if($result == "1"){
+				$this->session->flashdata('success','Login are successfull');
+				redirect('dashboard');
+			}else{
+				$this->session->flashdata('error','Login are Invalid');
+				redirect(base_url());
+			}
+		}
+	}
+	public function register(){
+		$this->form_validation->set_rules('user_name','user name','required');
+		if($this->form_validation->run()== FALSE){
+			
+		$this->load->view('front/register');
+		}else{
+			$result = $this->front_model->set_register();
+			if($result == "0"){
+				$this->session->set_flashdata('succuess','record Insert');
+			
+			}else{
+				$this->session->set_flashdata('error','record NOt Insert');
+			}
+			redirect('login');
+		}
+	}
+	public function dashboard(){
+		$this->load->view('front/dashboard');
+	}
+}
