@@ -1,3 +1,10 @@
+//Route//
+
+$route['register'] = "front/front_controller/register";
+$route['register(:any)'] = "front/front_controller/register/$1";
+
+//Controler//
+
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 class front_controller extends CI_Controller { 
 	function __construct(){
@@ -14,9 +21,7 @@ class front_controller extends CI_Controller {
 		$this->form_validation->set_rules('user_pass','user_pass','required');
 		if($this->form_validation->run() == FALSE){
 		$this->load->view('front/login');
-			
 		}else{
-			
 		//	echo "hii";exit;
 			$result=$this->front_model->check_login();
 			//print_r($result);exit;
@@ -33,13 +38,11 @@ class front_controller extends CI_Controller {
 		$this->form_validation->set_rules('user_name','user name','required');
 		if($this->form_validation->run()== FALSE){
 		$data['single_category'] = $this->front_model->get_single_category();
-			
 		$this->load->view('front/register',$data);
 		}else{
 			$result = $this->front_model->set_register();
 			if($result == "0"){
 				$this->session->set_flashdata('succuess','record Insert');
-			
 			}else{
 				$this->session->set_flashdata('error','record NOt Insert');
 			}
@@ -48,13 +51,8 @@ class front_controller extends CI_Controller {
 	}
 	public function dashboard(){
 		$data['category'] = $this->front_model->get_all_category();
-		$data['single_category'] = $this->front_model->get_single_category();
-		
 		$this->load->view('front/dashboard',$data);
 	}
-
-
-
 	public function inactive(){
 		$this->front_model->inactive();
 		$this->session->set_flashdata('success','Record inactive Suucessfully');
@@ -70,8 +68,12 @@ class front_controller extends CI_Controller {
 		$this->session->set_flashdata('success','Record delete Suucessfully');
 		redirect($_SERVER['HTTP_REFERER']);
 	}
+	public function check_logout(){
+		$this->session->sess_destroy();
+		redirect('login');
+	}
 }
-//Model//
+//model//
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 class front_model extends CI_Model{
 
@@ -79,9 +81,9 @@ class front_model extends CI_Model{
 		$this->db->where('user_email',$this->input->post('user_email'));
 		$this->db->where('user_pass',md5($this->input->post('user_pass')));
 		$this->db->where('is_deleted','0');
+	//	$this->db->where('status','1');
 		$result = $this->db->get('tbl_register');
 		$result = $result->row();
-		
 		if(!empty($result)){
 			$data= array(
 			'user_id' =>$result->id,
@@ -149,11 +151,11 @@ public  function delete(){
 }
 }
 //value//
- value="<?php if(!empty($single_category)){ echo $single_category->user_name;}?>"
+value="<?php if(!empty($single_category)){ echo $single_category->user_name;}?>"
 
-//Table//
+// Table //
 
- <table id="example1" class="table table-bordered table-striped">
+   <table id="example1" class="table table-bordered table-striped">
                   <thead>
                         <tr>
                         <th>id</th>
@@ -167,7 +169,7 @@ public  function delete(){
         <tbody>
             <?php if(!empty($category)){ $i=1; foreach($category as $category_result){?>
                 <tr>
-                <th scope="row"><?=$i++?></th>
+                <th scope="row"><?=$i++?></th>	
                 <td><?=$category_result->user_name?></td>
                 <td><?=$category_result->user_email?></td>
                 <td><?=$category_result->user_mobile?></td>
@@ -177,14 +179,7 @@ public  function delete(){
                         <?php 
                         if($category_result->status == '1'){
                         ?>
-                        <a class="btn btn-warning" onclick="return confirm('Are you sure to inactivate this record?');"
-                        href="<?=base_url();?>inactive/<?=$category_result->id?>/tbl_register" title="Inactive">
-                        	<i class="fa fa-search-plus" aria-hidden="true"></i></a>
-                        
-                        <?php }else{ ?>
-                        <a class="btn btn-primary" onclick="return confirm('Are you sure to activate this record?');"
-                        href="<?=base_url();?>active/<?=$category_result->id?>/tbl_register" title="Active">
-                        
+                       
                         <?php }?>
                         <a class="btn btn-danger" onclick="return confirm('Are you sure to delete this record?');"
                         href="<?=base_url();?>delete/<?=$category_result->id?>/tbl_register" title="Delete">
