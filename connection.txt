@@ -193,3 +193,30 @@ value="<?php if(!empty($single_category)){ echo $single_category->user_name;}?>"
             <?php }}?>
         </tbody>                
                 </table>
+
+//validation//
+<script src="<?=base_url()?>dist/js/slick.js"></script>
+  <script src="<?=base_url()?>dist/js/jquery.validate.js"></script>
+
+<script>
+ 
+  $(document).ready(function(){
+			$('#loginform').validate({
+						rules: {
+						user_email:{required:true},
+						user_pass:{required:true},
+            
+				
+					},
+					messages:{
+						user_email:{required:"Please enter Valid Eamil"},
+						user_pass:{required:"Please enter  right password"},
+					
+					},
+					submitHandler: function (form){
+						form.submit();		
+					}
+				});
+			});
+
+</script>
