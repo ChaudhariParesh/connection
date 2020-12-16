@@ -1,9 +1,83 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+class front_controller extends CI_Controller { 
+	function __construct(){
+		parent::__construct();
+		$this->is_login();
+	 }
+	public function is_login(){
+		if($this->session->userdata(('user_id') !="")){
+		redirect('dashboard');
+		}
+	 }
+	public function login(){
+		$this->form_validation->set_rules('user_email','user_email','required');
+		$this->form_validation->set_rules('user_pass','user_pass','required');
+		if($this->form_validation->run() == FALSE){
+		$this->load->view('front/login');
+			
+		}else{
+			
+		//	echo "hii";exit;
+			$result=$this->front_model->check_login();
+			//print_r($result);exit;
+			if($result == "1"){
+				$this->session->flashdata('success','Login are successfull');
+				redirect('dashboard');
+			}else{
+				$this->session->flashdata('error','Login are Invalid');
+				redirect(base_url());
+			}
+		}
+	}
+	public function register(){
+		$this->form_validation->set_rules('user_name','user name','required');
+		if($this->form_validation->run()== FALSE){
+		$data['single_category'] = $this->front_model->get_single_category();
+			
+		$this->load->view('front/register',$data);
+		}else{
+			$result = $this->front_model->set_register();
+			if($result == "0"){
+				$this->session->set_flashdata('succuess','record Insert');
+			
+			}else{
+				$this->session->set_flashdata('error','record NOt Insert');
+			}
+			redirect('login');
+		}
+	}
+	public function dashboard(){
+		$data['category'] = $this->front_model->get_all_category();
+		$data['single_category'] = $this->front_model->get_single_category();
+		
+		$this->load->view('front/dashboard',$data);
+	}
+
+
+
+	public function inactive(){
+		$this->front_model->inactive();
+		$this->session->set_flashdata('success','Record inactive Suucessfully');
+		redirect($_SERVER['HTTP_REFERER']);
+	}
+	public function active(){
+		$this->front_model->active();
+		$this->session->set_flashdata('success','Record active Suucessfully');
+		redirect($_SERVER['HTTP_REFERER']);
+	}
+	public function delete(){
+		$this->front_model->delete();
+		$this->session->set_flashdata('success','Record delete Suucessfully');
+		redirect($_SERVER['HTTP_REFERER']);
+	}
+}
+//Model//
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 class front_model extends CI_Model{
 
 	public  function check_login(){
 		$this->db->where('user_email',$this->input->post('user_email'));
-		$this->db->where('user_pass',$this->input->post('user_pass'));
+		$this->db->where('user_pass',md5($this->input->post('user_pass')));
 		$this->db->where('is_deleted','0');
 		$result = $this->db->get('tbl_register');
 		$result = $result->row();
@@ -25,8 +99,7 @@ class front_model extends CI_Model{
                 'user_name'  => $this->input->post('user_name'),
                 'user_email'  => $this->input->post('user_email'),
                 'user_mobile' =>$this->input->post('user_mobile'),
-                'user_mobile' =>$this->input->post('user_mobile'),
-                'user_pass'   =>$this->input->post('user_pass'),
+                'user_pass'   =>md5($this->input->post('user_pass')),
                 'user_address'=>$this->input->post('user_address'),
         );
         
@@ -43,55 +116,85 @@ class front_model extends CI_Model{
 			return 1;
 			}
 	}
+	public function get_all_category(){
+		$this->db->where('is_deleted','0');
+		$this->db->order_by('id','DESC');
+		$result = $this->db->get('tbl_register');
+		return $result->result();
+	}
+	public function get_single_category(){
+		$this->db->where('id',$this->uri->segment(2));
+		$this->db->where('is_deleted','0');
+		$result = $this->db->get('tbl_register');
+		return $result->row();
+	}
+	
+public  function active(){
+	$data=array('status'=>'1');
+	$this->db->where('id',$this->uri->segment(2));
+	$this->db->update($this->uri->segment(3),$data);
+	return true;
 }
+public function inactive(){
+	$data=array('status'=>'0');
+	$this->db->where('id',$this->uri->segment(2));
+	$this->db->update($this->uri->segment(3),$data);
+	return true;
+}
+public  function delete(){
+	$data=array('is_deleted'=>'1');
+	$this->db->where('id',$this->uri->segment(2));
+	$this->db->update($this->uri->segment(3),$data);
+	return true;
+}
+}
+//value//
+ value="<?php if(!empty($single_category)){ echo $single_category->user_name;}?>"
 
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
-class front_controller extends CI_Controller { 
-	function __construct(){
-		parent::__construct();
-		$this->is_login();
-	 }
-	public function is_login(){
-		if($this->session->userdata(('user_id') !="")){
-		redirect('dashboard');
-		}
-	 }
-	public function login(){
-		$this->form_validation->set_rules('user_email','user_email','required');
-		$this->form_validation->set_rules('user_pass','user_pass','required');
-		if($this->form_validation->run() == FALSE){
-			$this->load->view('front/login');
-			
-		}else{
-		//	echo "hii";exit;
-			$result=$this->front_model->check_login();
-			//print_r($result);exit;
-			if($result == "1"){
-				$this->session->flashdata('success','Login are successfull');
-				redirect('dashboard');
-			}else{
-				$this->session->flashdata('error','Login are Invalid');
-				redirect(base_url());
-			}
-		}
-	}
-	public function register(){
-		$this->form_validation->set_rules('user_name','user name','required');
-		if($this->form_validation->run()== FALSE){
-			
-		$this->load->view('front/register');
-		}else{
-			$result = $this->front_model->set_register();
-			if($result == "0"){
-				$this->session->set_flashdata('succuess','record Insert');
-			
-			}else{
-				$this->session->set_flashdata('error','record NOt Insert');
-			}
-			redirect('login');
-		}
-	}
-	public function dashboard(){
-		$this->load->view('front/dashboard');
-	}
-}
+//Table//
+
+ <table id="example1" class="table table-bordered table-striped">
+                  <thead>
+                        <tr>
+                        <th>id</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>Address</th>
+                            <th>Action</th>
+                        </tr>
+                  </thead>
+        <tbody>
+            <?php if(!empty($category)){ $i=1; foreach($category as $category_result){?>
+                <tr>
+                <th scope="row"><?=$i++?></th>
+                <td><?=$category_result->user_name?></td>
+                <td><?=$category_result->user_email?></td>
+                <td><?=$category_result->user_mobile?></td>
+                <td><?=$category_result->user_address?></td>
+
+                    <td class="">
+                        <?php 
+                        if($category_result->status == '1'){
+                        ?>
+                        <a class="btn btn-warning" onclick="return confirm('Are you sure to inactivate this record?');"
+                        href="<?=base_url();?>inactive/<?=$category_result->id?>/tbl_register" title="Inactive">
+                        	<i class="fa fa-search-plus" aria-hidden="true"></i></a>
+                        
+                        <?php }else{ ?>
+                        <a class="btn btn-primary" onclick="return confirm('Are you sure to activate this record?');"
+                        href="<?=base_url();?>active/<?=$category_result->id?>/tbl_register" title="Active">
+                        
+                        <?php }?>
+                        <a class="btn btn-danger" onclick="return confirm('Are you sure to delete this record?');"
+                        href="<?=base_url();?>delete/<?=$category_result->id?>/tbl_register" title="Delete">
+                        <i class="fa fa-trash" aria-hidden="true"></i></a>
+                        
+                        <a class="btn btn-primary" href="<?=base_url();?>register/<?=$category_result->id?>" 
+                        title="Edit">
+                        <i class="fa fa-pencil fa-fw" aria-hidden="true"></i></i></a>
+                    </td>
+                </tr>
+            <?php }}?>
+        </tbody>                
+                </table>
